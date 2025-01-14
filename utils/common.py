@@ -25,22 +25,38 @@ class EdgeType(enum.IntEnum):
     SIZE = 3
 
 
+# def move2device(data, device):
+#     """
+#     Move the given data to the given device (e.g. `cuda:0`).
+#     """
+#     if hasattr(data, 'to'):
+#         return data.to(device)
+#     elif type(data) == dict:
+#         out = {}
+#         for k, v in data.items():
+#             out[k] = move2device(v, device)
+#     elif type(data) == list:
+#         out = [move2device(x, device) for x in data]
+#     else:
+#         out = data
+
+#     return out
+
 def move2device(data, device):
     """
-    Move the given data to the given device (e.g. `cuda:0`).
+    Move the given data to the specified device and ensure the correct dtype.
     """
-    if hasattr(data, 'to'):
+    if isinstance(data, torch.Tensor):
+        return data.to(device).to(torch.float32)
+    elif isinstance(data, dict):
+        return {k: move2device(v, device) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [move2device(v, device) for v in data]
+    elif hasattr(data, 'to'):  # For PyTorch Geometric data or similar objects
         return data.to(device)
-    elif type(data) == dict:
-        out = {}
-        for k, v in data.items():
-            out[k] = move2device(v, device)
-    elif type(data) == list:
-        out = [move2device(x, device) for x in data]
     else:
-        out = data
+        return data
 
-    return out
 
 
 def detach_dict(data):
